@@ -1,0 +1,461 @@
+ /*1. which shippers do we have?*/
+  select * from [Northwind].[dbo].[Shippers] 
+  /* 2. Certain fields from Categories, two columns, CategoryName and Description.*/
+ SELECT [CategoryName]
+      ,[Description]
+    FROM [Northwind].[dbo].[Categories]
+	/* 3. Sales Representatives; FirstName, LastName, and HireDate of all the employees with the Title of Sales
+Representative */
+SELECT [LastName]
+      ,[FirstName]
+      ,[HireDate]
+  FROM [Northwind].[dbo].[Employees]
+  where Title ='Sales Representative' 
+/*4: both have the title of Sales Representative, and also are in the United States*/
+SELECT [LastName]
+      ,[FirstName]
+      ,[HireDate]
+  FROM [Northwind].[dbo].[Employees]
+  where Title ='Sales Representative' AND Country= 'USA'
+  /*5: orders placed by a specific employee*/
+  select OrderID , OrderDate from [Northwind].[dbo].[Orders]
+  where EmployeeID=5
+  /*6: show the SupplierID, ContactName, and ContactTitle for those Suppliers whose ContactTitle is not Marketing Manager*/
+  select SupplierID,ContactName,ContactTitle 
+  from [Northwind].[dbo].[Suppliers]
+  where ContactTitle not in ('Marketing Manager')
+  /* 7: ProductID and ProductName for those products where the ProductName includes the string “queso”*/
+  select ProductID, ProductName from  [Northwind].[dbo].[Products]
+  where lower (ProductName ) like '%Queso%'
+  /* 8: Orders table,the OrderID, CustomerID, and ShipCountry for the orders where the ShipCountry is either France or Belgium*/
+  select OrderID,CustomerID,ShipCountry from [Northwind].[dbo].[Orders]
+  where ShipCountry in ('France','Belgium')
+  /*9: Orders shipping to any country in Latin America*/
+  select OrderID,CustomerID,ShipCountry from [Northwind].[dbo].[Orders]
+  where ShipCountry in ('Brazil','Mexico','Argentina','Venezuela')
+  /*10: Employees, in order of age*/
+  select FirstName, LastName, Title,BirthDate from [Northwind].[dbo].[Employees]
+  order by BirthDate ASC
+  /*11: Showing only the Date with a DateTime field*/
+select FirstName, LastName, Title, convert(DATE,BirthDate) as DateOnlyBirthDate
+from [Northwind].[dbo].[Employees]
+  order by DateOnlyBirthDate ASC
+  /*12: Employees full name*/
+  select FirstName, LastName, FirstName +' '+ LastName as FullName
+  from [Northwind].[dbo].[Employees]
+  /*13: OrderDetails amount per line item*/
+  select OrderID, ProductID, UnitPrice,Quantity, UnitPrice*Quantity as TotalPrice
+  from [Northwind].[dbo].[OrderDetails]
+  /*14: How many customers?*/
+  select count(* ) as TotalCustomers
+  from [Northwind].[dbo].[Customers]
+  /*15: Show the date of the first order ever made in the Orders table.*/
+  select min(OrderDate) as FirstOrder from [Northwind].[dbo].[Orders]
+  /*16: Show a list of countries where the Northwind company has customers*/
+  select distinct Country from [Northwind].[dbo].[Customers] 
+  /*17: Contact titles for customers*/
+  select  count(ContactTitle) as TotalContactTitle , ContactTitle
+  from [Northwind].[dbo].[Customers] 
+  group by ContactTitle
+  /*18: Products with associated supplier names*/
+  select ProductID, ProductName, CompanyName 
+  from [Northwind].[dbo].[Products] a
+ join [Northwind].[dbo].[Suppliers] b
+  on a.SupplierID=b.SupplierID
+  select SupplierID, ProductID, ProductName from [Northwind].[dbo].[Products]
+  select SupplierID, CompanyName  from [Northwind].[dbo].[Suppliers]
+  /*19: Show the OrderID, OrderDate (date only), and CompanyName of the Shipper, and sort by OrderID.*/
+  select a.OrderID, convert(DATE,a.OrderDate) as OrderDate , b.CompanyName
+  from [Northwind].[dbo].[Orders] a
+  join [Northwind].[dbo].[Shippers] b
+  on b.ShipperID=a.ShipVia 
+  where OrderID < 10300 
+  /*20: Categories, and the total products in each category*/
+  select count(b.CategoryID) as TotalProducts, a.CategoryName
+  from [Northwind].[dbo].[Categories] a
+  join [Northwind].[dbo].[Products] b
+  on a.CategoryID=b.CategoryID
+  group by CategoryName
+  order by TotalProducts DESC 
+  /*21: In the Customers table, show the total number of customers per Country and City*/
+  select count(CustomerID) as  TotalCustomer , Country, City
+    from [Northwind].[dbo].[Customers]
+	group by Country, City
+	order by TotalCustomer DESC 
+/*22: Products that need reordering*/
+select ProductID,ProductName,convert(int,UnitsInStock) as UnitsInStock ,convert(int,ReorderLevel) as ReorderLevel
+from [Northwind].[dbo].[Products]
+where convert(int,UnitsInStock) <convert(int,ReorderLevel) 
+order by ProductID ASC
+/*23: Products that need reordering, continued*/
+select ProductID ,ProductName, UnitsInStock, UnitsOnOrder, ReorderLevel, Discontinued 
+from [Northwind].[dbo].[Products] 
+where UnitsInStock + UnitsOnOrder <= ReorderLevel
+and Discontinued = 0
+/*24: a list of all customers, sorted by region, alphabetically. However, he wants the customers with no region (null in the Region field) to be at the end,sorted
+by CustomerID*/
+select CustomerID, CompanyName, Region,
+RegionOrder=
+(
+Case 
+when Region is NULL Then 1
+else 0
+End )
+from [Northwind].[dbo].[Customers]
+order by RegionOrder, CustomerID
+/*25: 3 COUNTRIES with the highest average freight- Orders*/
+select TOP 3 AVG(Freight)as AverageFreight, ShipCountry
+From [Northwind].[dbo].[Orders]
+group by ShipCountry
+order by AverageFreight DESC
+/*26: 2015*/ 
+select TOP 3 AVG(Freight)as AverageFreight, ShipCountry
+From [Northwind].[dbo].[Orders]
+where convert(DATE,OrderDate )between '2015-01-01' and '2015-12-31'
+group by ShipCountry
+order by AverageFreight DESC
+/*27: same as 26*/
+Select top 3 ShipCountry, AVGFreight=AVG(Freight) 
+FROM [Northwind].[dbo].[Orders]
+WHERE year(OrderDate)=2015
+Group by ShipCountry
+Order by AVGFreight desc
+
+Select OrderID
+FROM [Northwind].[dbo].[Orders]
+WHERE year(OrderDate)=2015 AND OrderID NOT IN (SELECT OrderID FROM [Northwind].[dbo].[Orders] WHERE OrderDate between '1/1/2015' and '12/31/2015')
+
+/*28: 3 ship countries highest average freight last year, using the end date in OrderDate in Orders*/
+select max(convert(DATE, OrderDate)) from [Northwind].[dbo].[Orders]
+
+Select TOP 3 AVG(Freight)as AverageFreight, ShipCountry
+From [Northwind].[dbo].[Orders]
+where convert(DATE,OrderDate) >=  convert(DATE,DATEADD(year, -1, '2016-05-06')) 
+group by ShipCountry
+order by AverageFreight DESC
+/*29: emploeeID, LastName, OrderID, ProductName, Quantity- join 4 times*/
+select b.EmployeeID, b.LastName, a.OrderID, c.ProductName, d.Quantity
+from  [Northwind].[dbo].[Employees] b
+join [Northwind].[dbo].[Orders] a
+on a.EmployeeID = b. EmployeeID
+join [Northwind].[dbo].[OrderDetails] d
+on a.OrderID=d.OrderID
+join [Northwind].[dbo].[Products] c
+on c.ProductID= d.ProductID
+order by c.ProductID, a.OrderID
+/*30: Customers with no orders*/
+select a.CustomerID as Customers_CustomerID, b.CustomerID as Orders_CustomerID
+from [Northwind].[dbo].[Customers] a
+left join [Northwind].[dbo].[Orders] b
+on a.CustomerID=b.CustomerID
+where b.CustomerID is null 
+/*31:   Customers with no orders for EmployeeID 4 */
+select a.CustomerID as Customers_CustomerID, b.CustomerID as Orders_CustomerID
+from [Northwind].[dbo].[Customers] a
+left join [Northwind].[dbo].[Orders] b
+on a.CustomerID=b.CustomerID
+and b.EmployeeID=4 
+where b.CustomerID is null 
+/*  2nd way */
+select CustomerID from [Northwind].[dbo].[Customers] 
+where CustomerID not in (select CustomerID from [Northwind].[dbo].[Orders] where EmployeeID=4)
+/*32: high-value customers as those who've made at least 1 order with
+a total value (not including the discount) equal to $10,000 or more in 2016*/
+select a.CustomerID, a.CompanyName,b.OrderID, sum(c.UnitPrice*c.Quantity) as TotalOrderAmount
+from [Northwind].[dbo].[Customers] a
+   join  [Northwind].[dbo].[Orders] b
+   on a.CustomerID=b.CustomerID
+	join  [Northwind].[dbo].[OrderDetails] c
+	on b.OrderID=c.OrderID
+	where OrderDate between '2016-01-01' and '2016-12-31'
+	group by a.CustomerID, a.CompanyName, b.OrderID
+	having sum(c.UnitPrice*c.Quantity)>10000
+	order by TotalOrderAmount DESC 
+/*33: high-value customers as those who have orders totaling $15,000 or more in 2016*/
+select a.CustomerID, a.CompanyName, sum(c.UnitPrice*c.Quantity) as TotalOrderAmount
+from [Northwind].[dbo].[Customers] a
+   join  [Northwind].[dbo].[Orders] b
+   on a.CustomerID=b.CustomerID
+	join  [Northwind].[dbo].[OrderDetails] c
+	on b.OrderID=c.OrderID
+	where OrderDate between '2016-01-01' and '2016-12-31'
+	group by a.CustomerID, a.CompanyName
+	having sum(c.UnitPrice*c.Quantity)>15000
+	order by TotalOrderAmount DESC 
+/*34: high-value customers with discount*/
+select a.CustomerID, a.CompanyName, sum(c.UnitPrice*c.Quantity) as Totalwithoutdiscount,sum(c.UnitPrice*c.Quantity*(1.00-c.Discount)) as Totalwithdiscount
+from [Northwind].[dbo].[Customers] a
+   join  [Northwind].[dbo].[Orders] b
+   on a.CustomerID=b.CustomerID
+	join  [Northwind].[dbo].[OrderDetails] c
+	on b.OrderID=c.OrderID
+	where OrderDate between '2016-01-01' and '2016-12-31'
+	group by a.CustomerID, a.CompanyName
+	having sum(c.UnitPrice*c.Quantity*(1.00-c.Discount))>10000
+	order by Totalwithdiscount DESC 
+/*35: all orders made on the last day of the month, order by EmpoyeeID and Orrder ID*/
+select EmployeeID, OrderID, OrderDate
+from [Northwind].[dbo].[Orders]
+where OrderDate=EOMONTH(OrderDate)
+order by EmployeeID, OrderID
+/*36: show 10 orders with most line item*/
+select TOP 10 a.OrderID, count(b.OrderID) as TotalOrderDetails
+from [Northwind].[dbo].[Orders] a
+join [Northwind].[dbo].[OrderDetails] b
+on a.OrderID=b.OrderID
+group by a.OrderID
+order by TotalOrderDetails DESC
+/*37: a random 2% of all orders*/
+select top 2 percent OrderID
+from [Northwind].[dbo].[Orders]
+order by NEWID()
+/*38: orders-accidental double-entry */
+select OrderID
+from [Northwind].[dbo].[OrderDetails]
+where Quantity>=60
+group by OrderID, Quantity
+having count(*)>1 
+/*39: orders-accidental double-entry details*/
+with A as 
+(select OrderID
+from [Northwind].[dbo].[OrderDetails]
+where Quantity>=60
+group by OrderID, Quantity
+having count(*)>1 )
+select OrderID, ProductID, UnitPrice, Quantity, Discount from [Northwind].[dbo].[OrderDetails]
+where OrderID in( select OrderID from A)
+order by OrderID, Quantity
+/*40: Orders - accidental double-entry details, derived table*/
+Select
+OrderDetails.OrderID
+,ProductID
+,UnitPrice
+,Quantity
+,Discount
+From [Northwind].[dbo].[OrderDetails]
+Join (
+Select Distinct 
+OrderID
+From [Northwind].[dbo].[OrderDetails]
+Where Quantity >= 60
+Group By OrderID, Quantity
+Having Count(*) > 1
+)A
+on A.OrderID = OrderDetails.OrderID
+Order by OrderID, ProductID
+/* 41: Late orders Which orders are late?*/
+select OrderID, convert(DATE,OrderDate) OrderDate, CONVERT(DATE, RequiredDate) RequiredDate, CONVERT(DATE,ShippedDate) ShippedDate
+from [Northwind].[dbo].[Orders]
+where convert(DATE, ShippedDate) >= convert(DATE, RequiredDate)
+/*42: Late orders - which employees?*/
+select B.LastName, A.EmployeeID , count(A.EmployeeID) as TotalLateOrders 
+from [Northwind].[dbo].[Orders] A
+join [Northwind].[dbo].[Employees] B
+on A.EmployeeID=B.EmployeeID
+where convert(DATE, ShippedDate) >= convert(DATE, RequiredDate)
+group by A.EmployeeID, B.LastName
+order by TotalLateOrders DESC
+/*43: Late orders vs. total orders*/
+With CTE as ( select B.LastName, A.EmployeeID , count(A.EmployeeID)  TotalLateOrders 
+from [Northwind].[dbo].[Orders] A
+ join [Northwind].[dbo].[Employees] B
+on A.EmployeeID=B.EmployeeID
+where convert(DATE, ShippedDate) >= convert(DATE, RequiredDate)
+group by A.EmployeeID, B.LastName )
+, cte1 as (select EmployeeID, COUNT(OrderID) as TotalOrders
+from [Northwind].[dbo].[Orders]
+group by EmployeeID)
+select CTE.LastName, CTE.EmployeeID, CTE.TotalLateOrders, cte1.TotalOrders FROM cte1
+JOIN CTE
+on CTE.EmployeeID=cte1.EmployeeID
+/*44: Late orders vs. total orders - missing employee*/
+With CTE as ( select B.LastName, A.EmployeeID , count(A.EmployeeID)  TotalLateOrders 
+from [Northwind].[dbo].[Orders] A
+ join [Northwind].[dbo].[Employees] B
+on A.EmployeeID=B.EmployeeID
+where convert(DATE, ShippedDate) >= convert(DATE, RequiredDate)
+group by A.EmployeeID, B.LastName )
+, cte1 as (select d.LastName, c.EmployeeID, COUNT(OrderID) as TotalOrders
+from [Northwind].[dbo].[Orders] c
+join [Northwind].[dbo].[Employees] d
+on c.EmployeeID=d.EmployeeID
+group by c.EmployeeID,d.LastName)
+select cte1.LastName, cte1.EmployeeID, CTE.TotalLateOrders, cte1.TotalOrders FROM cte1
+left JOIN CTE
+on CTE.EmployeeID=cte1.EmployeeID
+/*45: Late orders vs. total orders - fix null, should have a 0 instead of a Null in LateOrders.*/
+With CTE as ( select B.LastName, A.EmployeeID , count(A.EmployeeID)  TotalLateOrders 
+from [Northwind].[dbo].[Orders] A
+ join [Northwind].[dbo].[Employees] B
+on A.EmployeeID=B.EmployeeID
+where convert(DATE, ShippedDate) >= convert(DATE, RequiredDate)
+group by A.EmployeeID, B.LastName )
+, cte1 as (select d.LastName, c.EmployeeID, COUNT(OrderID) as TotalOrders
+from [Northwind].[dbo].[Orders] c
+join [Northwind].[dbo].[Employees] d
+on c.EmployeeID=d.EmployeeID
+group by c.EmployeeID,d.LastName)
+select cte1.LastName, cte1.EmployeeID, isnull(CTE.TotalLateOrders,0) TotalLateOrders, cte1.TotalOrders
+FROM cte1
+left JOIN CTE
+on CTE.EmployeeID=cte1.EmployeeID
+/*46: Late orders vs. total orders - percentage, the percentage of late orders over total orders*/
+With CTE as ( select B.LastName, A.EmployeeID , count(A.EmployeeID)  TotalLateOrders 
+from [Northwind].[dbo].[Orders] A
+ join [Northwind].[dbo].[Employees] B
+on A.EmployeeID=B.EmployeeID
+where convert(DATE, ShippedDate) >= convert(DATE, RequiredDate)
+group by A.EmployeeID, B.LastName )
+, cte1 as (select d.LastName, c.EmployeeID, COUNT(OrderID) as TotalOrders
+from [Northwind].[dbo].[Orders] c
+join [Northwind].[dbo].[Employees] d
+on c.EmployeeID=d.EmployeeID
+group by c.EmployeeID,d.LastName)
+select cte1.LastName, cte1.EmployeeID, isnull(CTE.TotalLateOrders,0) TotalLateOrders, cte1.TotalOrders ,  (IsNull(TotalLateOrders, 0) * 1.00) / TotalOrders PercentLateOrders
+FROM cte1
+left JOIN CTE
+on CTE.EmployeeID=cte1.EmployeeID
+/* 47: Late orders vs. total orders - fix decimal*/
+With CTE as ( select B.LastName, A.EmployeeID , count(A.EmployeeID)  TotalLateOrders 
+from [Northwind].[dbo].[Orders] A
+ join [Northwind].[dbo].[Employees] B
+on A.EmployeeID=B.EmployeeID
+where convert(DATE, ShippedDate) >= convert(DATE, RequiredDate)
+group by A.EmployeeID, B.LastName )
+, cte1 as (select d.LastName, c.EmployeeID, COUNT(OrderID) as TotalOrders
+from [Northwind].[dbo].[Orders] c
+join [Northwind].[dbo].[Employees] d
+on c.EmployeeID=d.EmployeeID
+group by c.EmployeeID,d.LastName)
+select cte1.LastName, cte1.EmployeeID, isnull(CTE.TotalLateOrders,0) TotalLateOrders, cte1.TotalOrders ,  Round((IsNull(TotalLateOrders, 0) * 1.00) / TotalOrders,2) PercentLateOrders
+FROM cte1
+left JOIN CTE
+on CTE.EmployeeID=cte1.EmployeeID
+/*48: Customer grouping */
+With CTE as (select a.CustomerID, a.CompanyName, sum(c.UnitPrice*c.Quantity) as TotalOrderAmount
+from [Northwind].[dbo].[Customers] a
+   join  [Northwind].[dbo].[Orders] b
+   on a.CustomerID=b.CustomerID
+	join  [Northwind].[dbo].[OrderDetails] c
+	on b.OrderID=c.OrderID	
+	where OrderDate between '2016-01-01' and '2016-12-31'
+	group by a.CustomerID, a.CompanyName)
+
+	select *,
+	CASE  
+	WHEN TotalOrderAmount between 0 and 1000 then 'low'
+	WHEN   TotalOrderAmount between 1000 and 5000 then 'medium'
+		WHEN TotalOrderAmount between 5000 and 10000 then 'high'
+		 WHEN TotalOrderAmount >  10000 then 'very high'
+   END as Customergroup
+	from CTE 
+	order by CustomerID
+/*49: Customer grouping - fix null*/
+With CTE as (select a.CustomerID, a.CompanyName, sum(c.UnitPrice*c.Quantity) as TotalOrderAmount
+from [Northwind].[dbo].[Customers] a
+   join  [Northwind].[dbo].[Orders] b
+   on a.CustomerID=b.CustomerID
+	join  [Northwind].[dbo].[OrderDetails] c
+	on b.OrderID=c.OrderID	
+	where OrderDate between '2016-01-01' and '2016-12-31'
+	group by a.CustomerID, a.CompanyName)
+	select *,
+	CASE  
+	WHEN TotalOrderAmount >=0 and TotalOrderAmount <1000 then 'low'
+	WHEN   TotalOrderAmount >= 1000 and TotalOrderAmount< 5000 then 'medium'
+		WHEN TotalOrderAmount >=5000 and TotalOrderAmount < 10000 then 'high'
+		 WHEN TotalOrderAmount > 10000 then 'very high'
+   END as Customergroup
+	from CTE 
+	order by CustomerID
+/* 50 Customer grouping with percentage*/
+With CTE as (select a.CustomerID, a.CompanyName, sum(c.UnitPrice*c.Quantity) as TotalOrderAmount
+from [Northwind].[dbo].[Customers] a
+   join  [Northwind].[dbo].[Orders] b
+   on a.CustomerID=b.CustomerID
+	join  [Northwind].[dbo].[OrderDetails] c
+	on b.OrderID=c.OrderID	
+	where OrderDate between '2016-01-01' and '2016-12-31'
+	group by a.CustomerID, a.CompanyName)
+, CTE2 as (select *,
+	CASE  
+	WHEN TotalOrderAmount >=0 and TotalOrderAmount <1000 then 'low'
+	WHEN   TotalOrderAmount >= 1000 and TotalOrderAmount< 5000 then 'medium'
+		WHEN TotalOrderAmount >=5000 and TotalOrderAmount < 10000 then 'high'
+		 WHEN TotalOrderAmount > 10000 then 'very high'
+   END as Customergroup
+	from CTE 
+	) 
+select Customergroup, count(*) TotalInGroup, PercentageInGroup= count(*)*1.0/(select count(*) from CTE2)
+from CTE2
+group by Customergroup
+order by TotalInGroup DESC
+/*51: Customer grouping - flexible*/
+With CTE as (select a.CustomerID, a.CompanyName, sum(c.UnitPrice*c.Quantity) as TotalOrderAmount
+from [Northwind].[dbo].[Customers] a
+   join  [Northwind].[dbo].[Orders] b
+   on a.CustomerID=b.CustomerID
+	join  [Northwind].[dbo].[OrderDetails] c
+	on b.OrderID=c.OrderID	
+	where OrderDate between '2016-01-01' and '2016-12-31'
+	group by a.CustomerID, a.CompanyName)
+	select CustomerID, CompanyName,TotalOrderAmount ,A.CustomerGroupName
+	from CTE 
+	JOIN [Northwind].[dbo].[CustomerGroupThresholds] A
+	ON CTE.TotalOrderAmount BETWEEN A.RangeBottom AND A.RangeTop
+/*52: Countries with suppliers or customers*/
+select Country from [Northwind].[dbo].[Customers]
+UNION 
+SELECT Country from [Northwind].[dbo].[Suppliers]
+order by Country
+/*53: Countries with suppliers or customers, version 2*/
+Select distinct a.Country as CustomerCountry, b.Country as SupplierCountry from [Northwind].[dbo].[Customers] a
+full join [Northwind].[dbo].[Suppliers] b
+on a.Country=b.Country
+/*54: Countries with suppliers or customers - version 3 country name, the total suppliers, and the total customers.*/
+with cte3 as ( select Country, Total=count(*) from [Northwind].[dbo].[Customers] group by Country)
+, cte4 as ( select Country, Total=count(*) from [Northwind].[dbo].[Suppliers] group by Country)
+select 
+Country=isnull(cte3.Country,cte4.Country)
+, TotalCustomers=isnull(cte3.Total,0)
+, TotalSuppliers=isnull(cte4.Total,0)
+from cte3
+full join cte4
+on cte3.Country=cte4.Country
+ /*55: First order in each country windows function: row over partition*/
+select TOP 21 ShipCountry, CustomerID, OrderID, convert(DATE, OrderDate) AS OrderDate
+ , row_number () OVER( PARTITION BY ShipCountry order by OrderID) ID
+ from [Northwind].[dbo].[Orders] 
+ order by ID ASC
+
+ WITH CTE3 AS ( select ShipCountry, CustomerID, OrderID, convert(DATE, OrderDate) AS OrderDate
+ , row_number () OVER( PARTITION BY ShipCountry order by OrderID) ID
+ from [Northwind].[dbo].[Orders] )
+ select ShipCountry, CustomerID, OrderID, convert(DATE, OrderDate) AS OrderDate
+ from CTE3
+ where ID=1
+ order by ShipCountry
+/*56: Customers with multiple orders in 5 day period*/
+select 
+  a.CustomerID, a.OrderID as InitialOrderID,a.OrderDate as InitialOrderDate, b.OrderID as NextOrderID, b.OrderDate as NextOrderDate
+, DaysBetween = Datediff(dd,a.OrderDate, b.OrderDate)
+FROM [Northwind].[dbo].[Orders] a
+ join [Northwind].[dbo].[Orders] b
+on a.CustomerID=b.CustomerID
+where Datediff(dd,a.OrderDate, b.OrderDate) <=5 
+  and a.OrderID < b.OrderID
+  order by a.CustomerID, a.OrderID
+/*57: Customers with multiple orders in 5 day period, version 2*/
+with CTE4 AS (select CustomerID, convert(DATE, OrderDate) as OrderDate, 
+convert(DATE, LEAD(OrderDate,1) over (partition by CustomerID order by CustomerID,OrderDate)) as NextOrderDate
+from [Northwind].[dbo].[Orders]
+)
+Select
+CustomerID
+,OrderDate
+,NextOrderDate
+,DaysBetweenOrders = DateDiff (dd, OrderDate, NextOrderDate)
+From CTE4
+Where
+DateDiff (dd, OrderDate, NextOrderDate) <= 5
+
