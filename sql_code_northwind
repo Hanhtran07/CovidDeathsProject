@@ -24,7 +24,7 @@ SELECT [LastName]
   select SupplierID,ContactName,ContactTitle 
   from [Northwind].[dbo].[Suppliers]
   where ContactTitle not in ('Marketing Manager')
-  /* 7: ProductID and ProductName for those products where the ProductName includes the string ìquesoî*/
+  /* 7: ProductID and ProductName for those products where the ProductName includes the string ‚Äúqueso‚Äù*/
   select ProductID, ProductName from  [Northwind].[dbo].[Products]
   where lower (ProductName ) like '%Queso%'
   /* 8: Orders table,the OrderID, CustomerID, and ShipCountry for the orders where the ShipCountry is either France or Belgium*/
