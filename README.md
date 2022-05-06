@@ -1,1 +1,1 @@
-# CovidDeathsProject
+# SQL_Northwind_Database_Exercises
